@@ -1,0 +1,35 @@
+;;;; Emacs Bookmark Format Version 1;;;; -*- coding: utf-8-emacs; mode: lisp-data -*-
+;;; This format is meant to be slightly human-readable;
+;;; nevertheless, you probably don't want to edit it.
+;;; -*- End Of Bookmark File Format Version Stamp -*-
+(("Bibliothek"
+ (filename . "~/Dokumente/Bibliothek/")
+ (front-context-string . "Johnson_Efficien")
+ (rear-context-string . "33 Mar 15 13:33 ")
+ (position . 267)
+ (last-modified 27062 44020 952074 242000))
+("Tasks file in Nextcloud"
+ (filename . "~/Nextcloud/Documents/tasks.org")
+ (front-context-string . "#+AUTHOR: Martin")
+ (rear-context-string)
+ (position . 1)
+ (last-modified 27061 39588 856355 118000))
+(".emacs.d"
+ (filename . "~/.emacs.d/")
+ (front-context-string . ".emacs.desktop\n ")
+ (rear-context-string . "87 Mar 14 11:12 ")
+ (position . 259)
+ (last-modified 27061 13510 826857 547000))
+("Blog"
+ (filename . "~/Dokumente/Projekte/Hugo/blog/")
+ (front-context-string . "content-org\n  dr")
+ (rear-context-string . "96 Mar  8 17:34 ")
+ (position . 697)
+ (last-modified 27053 42306 34879 971000))
+("Docs"
+ (filename . "~/Dokumente/Projekte/Docs/")
+ (front-context-string . "troubleshooting\n")
+ (rear-context-string . "96 Feb 22 10:35 ")
+ (position . 247)
+ (last-modified 27034 54638 86550 710000))
+)

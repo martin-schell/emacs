@@ -1,0 +1,551 @@
+
+#+TITLE: Maddins Emacs configuration
+#+AUTHOR: Martin Schell
+#+DESCRIPTION: My personal Emacs configuration.
+#+auto_tangle: t
+#+STARTUP: content
+
+* Package Management
+** Elpaca Package Manager
+
+The code below will clone Elpaca into your user-emacs-directory under the elpaca subdirectory. It then builds and activates Elpaca.
+
+#+begin_src emacs-lisp
+  (defvar elpaca-installer-version 0.12)
+  (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+  (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+  (defvar elpaca-sources-directory (expand-file-name "sources/" elpaca-directory))
+  (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                                :ref nil :depth 1 :inherit ignore
+                                :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+                                :build (:not elpaca-activate)))
+  (let* ((repo  (expand-file-name "elpaca/" elpaca-sources-directory))
+         (build (expand-file-name "elpaca/" elpaca-builds-directory))
+         (order (cdr elpaca-order))
+         (default-directory repo))
+    (add-to-list 'load-path (if (file-exists-p build) build repo))
+    (unless (file-exists-p repo)
+      (make-directory repo t)
+      (when (<= emacs-major-version 28) (require 'subr-x))
+      (condition-case-unless-debug err
+          (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                    ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
+                                                    ,@(when-let* ((depth (plist-get order :depth)))
+                                                        (list (format "--depth=%d" depth) "--no-single-branch"))
+                                                    ,(plist-get order :repo) ,repo))))
+                    ((zerop (call-process "git" nil buffer t "checkout"
+                                          (or (plist-get order :ref) "--"))))
+                    (emacs (concat invocation-directory invocation-name))
+                    ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                          "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                    ((require 'elpaca))
+                    ((elpaca-generate-autoloads "elpaca" repo)))
+              (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+            (error "%s" (with-current-buffer buffer (buffer-string))))
+        ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+    (unless (require 'elpaca-autoloads nil t)
+      (require 'elpaca)
+      (elpaca-generate-autoloads "elpaca" repo)
+      (let ((load-source-file-function nil)) (load "./elpaca-autoloads"))))
+  (add-hook 'after-init-hook #'elpaca-process-queues)
+  (elpaca `(,@elpaca-order))
+#+end_src
+
+#+begin_src emacs-lisp
+  ;; Install use-package support
+  (elpaca elpaca-use-package
+  ;; Enable use-package :ensure support for Elpaca.
+  (elpaca-use-package-mode))
+
+  ;; Block until current queue processed.
+  (elpaca-wait)
+#+end_src
+
+* General Configurations
+
+Reload buffers after changes on filesystem.
+
+#+begin_src emacs-lisp
+  (setq
+   global-auto-revert-mode 1
+   global-auto-revert-non-file-buffers t
+   auto-revert-verbose nil
+   )
+#+end_src
+
+| Effect                                        | Command                               |
+| Enable global auto-revert                     | ~global-auto-revert-mode~             |
+| Revert Dired and other buffers                | ~global-auto-revert-non-file-buffers~ |
+| Suppress the revert messages in the echo area | ~setq auto-revert-verbose~            |
+
+Sources:
+
+- [[https://github.com/daviwil/dotfiles/blob/master/Emacs.org][daviwil/dotfiles - Emacs.org]]
+
+* EPUB Mode
+
+As preparation, repository of mode was cloned repos folder.
+
+#+begin_src emacs-lisp
+  (add-to-list 'load-path "~/.emacs.d/repos/epub-mode/")
+  (autoload #'epub-mode "epub" nil t)
+  (add-to-list 'auto-mode-alist '("\\.epub\\'" . epub-mode))
+#+end_src
+
+| Command                        | Effect                                         |
+| ~add-to-list 'load-path~       | Adds cloned repository into Emacs load path    |
+| ~autoload~                     | Load library only for epub-mode                |
+| ~add-to-list 'auto-mode-alist~ | Enable epub-mode automatically for .epub files |
+
+#+RESULTS:
+: ((\.epub\' . epub-mode) (README\.md\' . gfm-mode) (\.\(?:md\|markdown\|mkd\|mdown\|mkdn\|mdwn\|mdx\)\' . markdown-mode) (\.\(e?ya?\|ra\)ml\' . yaml-mode) (\.a\(?:scii\)?doc\' . adoc-mode) (\.\(pu\|uml\|plantuml\|pum\|plu\)\' . plantuml-mode) (/git-rebase-todo\' . git-rebase-mode) (\.gpg\(~\|\.~[0-9]+~\)?\' nil epa-file) (\.elc\' . elisp-byte-code-mode) (\.zst\' nil jka-compr) (\.dz\' nil jka-compr) (\.xz\' nil jka-compr) (\.lzma\' nil jka-compr) (\.lz\' nil jka-compr) (\.g?z\' nil jka-compr) (\.bz2\' nil jka-compr) (\.Z\' nil jka-compr) (\.vr[hi]?\' . vera-mode) (\(?:\.\(?:rbw?\|ru\|rake\|thor\|axlsx\|jbuilder\|rabl\|gemspec\|podspec\)\|/\(?:Gem\|Rake\|Cap\|Thor\|Puppet\|Berks\|Brew\|Fast\|Vagrant\|Guard\|Pod\)file\)\' . ruby-mode) (\.re?st\' . rst-mode) (/\(?:Pipfile\|\.?flake8\)\' . conf-mode) (\.py[iw]?\' . python-mode) (\.m\' . octave-maybe-mode) (\.less\' . less-css-mode) (\.editorconfig\' . editorconfig-conf-mode) (\.scss\' . scss-mode) (\.cs\' . csharp-mode) (\.awk\' . awk-mode) (\.\(u?lpc\|pike\|pmod\(\.in\)?\)\' . pike-mode) (\.idl\' . idl-mode) (\.java\' . java-mode) (\.m\' . objc-mode) (\.ii\' . c++-mode) (\.i\' . c-mode) (\.lex\' . c-mode) (\.y\(acc\)?\' . c-mode) (\.h\' . c-or-c++-mode) (\.c\' . c-mode) (\.\(CC?\|HH?\)\' . c++-mode) (\.[ch]\(pp\|xx\|\+\+\)\' . c++-mode) (\.\(cc\|hh\)\' . c++-mode) (\.\(bat\|cmd\)\' . bat-mode) (\.[sx]?html?\(\.[a-zA-Z_]+\)?\' . mhtml-mode) (\.svgz?\' . image-mode) (\.svgz?\' . xml-mode) (\.x[bp]m\' . image-mode) (\.x[bp]m\' . c-mode) (\.p[bpgn]m\' . image-mode) (\.tiff?\' . image-mode) (\.gif\' . image-mode) (\.png\' . image-mode) (\.jpe?g\' . image-mode) (\.webp\' . image-mode) (\.te?xt\' . text-mode) (\.[tT]e[xX]\' . tex-mode) (\.ins\' . tex-mode) (\.ltx\' . latex-mode) (\.dtx\' . doctex-mode) (\.org\' . org-mode) (\.dir-locals\(?:-2\)?\.el\' . lisp-data-mode) (\.eld\' . lisp-data-mode) (eww-bookmarks\' . lisp-data-mode) (tramp\' . lisp-data-mode) (/archive-contents\' . lisp-data-mode) (places\' . lisp-data-mode) (\.emacs-places\' . lisp-data-mode) (\.el\' . emacs-lisp-mode) (Project\.ede\' . emacs-lisp-mode) (\(?:\.\(?:scm\|sls\|sld\|stk\|ss\|sch\)\|/\.guile\)\' . scheme-mode) (\.l\' . lisp-mode) (\.li?sp\' . lisp-mode) (\.[fF]\' . fortran-mode) (\.for\' . fortran-mode) (\.p\' . pascal-mode) (\.pas\' . pascal-mode) (\.\(dpr\|DPR\)\' . delphi-mode) (\.\([pP]\([Llm]\|erl\|od\)\|al\)\' . perl-mode) (Imakefile\' . makefile-imake-mode) (Makeppfile\(?:\.mk\)?\' . makefile-makepp-mode) (\.makepp\' . makefile-makepp-mode) (\.mk\' . makefile-gmake-mode) (\.make\' . makefile-gmake-mode) ([Mm]akefile\' . makefile-gmake-mode) (\.am\' . makefile-automake-mode) (\.texinfo\' . texinfo-mode) (\.te?xi\' . texinfo-mode) (\.[sS]\' . asm-mode) (\.asm\' . asm-mode) (\.css\' . css-mode) (\.mixal\' . mixal-mode) (\.gcov\' . compilation-mode) (/\.[a-z0-9-]*gdbinit . gdb-script-mode) (-gdb\.gdb . gdb-script-mode) ([cC]hange\.?[lL]og?\' . change-log-mode) ([cC]hange[lL]og[-.][0-9]+\' . change-log-mode) (\$CHANGE_LOG\$\.TXT . change-log-mode) (\.scm\.[0-9]*\' . scheme-mode) (\.[ckz]?sh\'\|\.shar\'\|/\.z?profile\' . sh-mode) (\.bash\' . sh-mode) (/PKGBUILD\' . sh-mode) (\(/\|\`\)\.\(bash_\(profile\|history\|log\(in\|out\)\)\|z?log\(in\|out\)\)\' . sh-mode) (\(/\|\`\)\.\(shrc\|zshrc\|m?kshrc\|bashrc\|t?cshrc\|esrc\)\' . sh-mode) (\(/\|\`\)\.\([kz]shenv\|xinitrc\|startxrc\|xsession\)\' . sh-mode) (\.m?spec\' . sh-mode) (\.m[mes]\' . nroff-mode) (\.man\' . nroff-mode) (\.sty\' . latex-mode) (\.cl[so]\' . latex-mode) (\.bbl\' . latex-mode) (\.bib\' . bibtex-mode) (\.bst\' . bibtex-style-mode) (\.sql\' . sql-mode) (\(acinclude\|aclocal\|acsite\)\.m4\' . autoconf-mode) (\.m[4c]\' . m4-mode) (\.mf\' . metafont-mode) (\.mp\' . metapost-mode) (\.vhdl?\' . vhdl-mode) (\.article\' . text-mode) (\.letter\' . text-mode) (\.i?tcl\' . tcl-mode) (\.exp\' . tcl-mode) (\.itk\' . tcl-mode) (\.icn\' . icon-mode) (\.sim\' . simula-mode) (\.mss\' . scribe-mode) (\.f9[05]\' . f90-mode) (\.f0[38]\' . f90-mode) (\.indent\.pro\' . fundamental-mode) (\.\(pro\|PRO\)\' . idlwave-mode) (\.srt\' . srecode-template-mode) (\.prolog\' . prolog-mode) (\.tar\' . tar-mode) (\.\(arc\|zip\|lzh\|lha\|zoo\|[jew]ar\|xpi\|rar\|cbr\|7z\|squashfs\|ARC\|ZIP\|LZH\|LHA\|ZOO\|[JEW]AR\|XPI\|RAR\|CBR\|7Z\|SQUASHFS\)\' . archive-mode) (\.oxt\' . archive-mode) (\.\(deb\|[oi]pk\)\' . archive-mode) (\`/tmp/Re . text-mode) (/Message[0-9]*\' . text-mode) (\`/tmp/fol/ . text-mode) (\.oak\' . scheme-mode) (\.sgml?\' . sgml-mode) (\.x[ms]l\' . xml-mode) (\.dbk\' . xml-mode) (\.dtd\' . sgml-mode) (\.ds\(ss\)?l\' . dsssl-mode) (\.js[mx]?\' . javascript-mode) (\.har\' . javascript-mode) (\.json\' . js-json-mode) (\.[ds]?va?h?\' . verilog-mode) (\.by\' . bovine-grammar-mode) (\.wy\' . wisent-grammar-mode) (\.erts\' . erts-mode) ([:/\]\..*\(emacs\|gnus\|viper\)\' . emacs-lisp-mode) (\`\..*emacs\' . emacs-lisp-mode) ([:/]_emacs\' . emacs-lisp-mode) (/crontab\.X*[0-9]+\' . shell-script-mode) (\.ml\' . lisp-mode) (\.ld[si]?\' . ld-script-mode) (ld\.?script\' . ld-script-mode) (\.xs\' . c-mode) (\.x[abdsru]?[cnw]?\' . ld-script-mode) (\.zone\' . dns-mode) (\.soa\' . dns-mode) (\.asd\' . lisp-mode) (\.\(asn\|mib\|smi\)\' . snmp-mode) (\.\(as\|mi\|sm\)2\' . snmpv2-mode) (\.\(diffs?\|patch\|rej\)\' . diff-mode) (\.\(dif\|pat\)\' . diff-mode) (\.[eE]?[pP][sS]\' . ps-mode) (\.\(?:PDF\|EPUB\|CBZ\|FB2\|O?XPS\|DVI\|OD[FGPST]\|DOCX\|XLSX?\|PPTX?\|pdf\|epub\|cbz\|fb2\|o?xps\|djvu\|dvi\|od[fgpst]\|docx\|xlsx?\|pptx?\)\' . doc-view-mode-maybe) (configure\.\(ac\|in\)\' . autoconf-mode) (\.s\(v\|iv\|ieve\)\' . sieve-mode) (BROWSE\' . ebrowse-tree-mode) (\.ebrowse\' . ebrowse-tree-mode) (#\*mail\* . mail-mode) (\.g\' . antlr-mode) (\.mod\' . m2-mode) (\.ses\' . ses-mode) (\.docbook\' . sgml-mode) (\.com\' . dcl-mode) (/config\.\(?:bat\|log\)\' . fundamental-mode) (/\.?\(authinfo\|netrc\)\' . authinfo-mode) (\.\(?:[iI][nN][iI]\|[lL][sS][tT]\|[rR][eE][gG]\|[sS][yY][sS]\)\' . conf-mode) (\.la\' . conf-unix-mode) (\.ppd\' . conf-ppd-mode) (java.+\.conf\' . conf-javaprop-mode) (\.properties\(?:\.[a-zA-Z0-9._-]+\)?\' . conf-javaprop-mode) (\.toml\' . conf-toml-mode) (\.desktop\' . conf-desktop-mode) (/\.redshift\.conf\' . conf-windows-mode) (\`/etc/\(?:DIR_COLORS\|ethers\|.?fstab\|.*hosts\|lesskey\|login\.?de\(?:fs\|vperm\)\|magic\|mtab\|pam\.d/.*\|permissions\(?:\.d/.+\)?\|protocols\|rpc\|services\)\' . conf-space-mode) (\`/etc/\(?:acpid?/.+\|aliases\(?:\.d/.+\)?\|default/.+\|group-?\|hosts\..+\|inittab\|ksysguarddrc\|opera6rc\|passwd-?\|shadow-?\|sysconfig/.+\)\' . conf-mode) ([cC]hange[lL]og[-.][-0-9a-z]+\' . change-log-mode) (/\.?\(?:gitconfig\|gnokiirc\|hgrc\|kde.*rc\|mime\.types\|wgetrc\)\' . conf-mode) (/\.mailmap\' . conf-unix-mode) (/\.\(?:asound\|enigma\|fetchmail\|gltron\|gtk\|hxplayer\|mairix\|mbsync\|msmtp\|net\|neverball\|nvidia-settings-\|offlineimap\|qt/.+\|realplayer\|reportbug\|rtorrent\.\|screen\|scummvm\|sversion\|sylpheed/.+\|xmp\)rc\' . conf-mode) (/\.\(?:gdbtkinit\|grip\|mpdconf\|notmuch-config\|orbital/.+txt\|rhosts\|tuxracer/options\)\' . conf-mode) (/\.?X\(?:default\|resource\|re\)s\> . conf-xdefaults-mode) (/X11.+app-defaults/\|\.ad\' . conf-xdefaults-mode) (/X11.+locale/.+/Compose\' . conf-colon-mode) (/X11.+locale/compose\.dir\' . conf-javaprop-mode) (\.~?[0-9]+\.[0-9][-.0-9]*~?\' nil t) (\.\(?:orig\|in\|[bB][aA][kK]\)\' nil t) ([/.]c\(?:on\)?f\(?:i?g\)?\(?:\.[a-zA-Z0-9._-]+\)?\' . conf-mode-maybe) (\.[1-9]\' . nroff-mode) (\.art\' . image-mode) (\.avs\' . image-mode) (\.bmp\' . image-mode) (\.cmyk\' . image-mode) (\.cmyka\' . image-mode) (\.crw\' . image-mode) (\.dcr\' . image-mode) (\.dcx\' . image-mode) (\.dng\' . image-mode) (\.dpx\' . image-mode) (\.fax\' . image-mode) (\.heic\' . image-mode) (\.hrz\' . image-mode) (\.icb\' . image-mode) (\.icc\' . image-mode) (\.icm\' . image-mode) (\.ico\' . image-mode) (\.icon\' . image-mode) (\.jbg\' . image-mode) (\.jbig\' . image-mode) (\.jng\' . image-mode) (\.jnx\' . image-mode) (\.miff\' . image-mode) (\.mng\' . image-mode) (\.mvg\' . image-mode) (\.otb\' . image-mode) (\.p7\' . image-mode) (\.pcx\' . image-mode) (\.pdb\' . image-mode) (\.pfa\' . image-mode) (\.pfb\' . image-mode) (\.picon\' . image-mode) (\.pict\' . image-mode) (\.rgb\' . image-mode) (\.rgba\' . image-mode) (\.tga\' . image-mode) (\.wbmp\' . image-mode) (\.webp\' . image-mode) (\.wmf\' . image-mode) (\.wpg\' . image-mode) (\.xcf\' . image-mode) (\.xmp\' . image-mode) (\.xwd\' . image-mode) (\.yuv\' . image-mode) (\.tgz\' . tar-mode) (\.tbz2?\' . tar-mode) (\.txz\' . tar-mode) (\.tzst\' . tar-mode))
+
+Source: [[https://github.com/PeteLeng/epub-mode][Github - Emacs EPUB Mode]]
+
+* Org Mode
+
+Enables UTF-8 characters for Org Mode bullets.
+
+#+begin_src emacs-lisp
+  (use-package org-bullets
+    :ensure t
+    :config
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+#+end_src
+
+Enables Shift selection for the content and the selection of priority and TODO-items for bullets.
+In case of bullets, shift + arrow left / right sets a TODO item and shift + arrow down / up sets the priority of the bullet.
+
+#+begin_src emacs-lisp
+  (setq org-support-shift-select t)
+#+end_src
+
+At startup, content below headers will vertically alligned with the header.
+
+#+begin_src emacs-lisp
+  (setq org-startup-indented t)
+  (setq org-startup-with-inline-images t)
+#+end_src
+
+*** Task Management
+
+Enables Shift selection for the content and the selection of priority and TODO-items for bullets.
+In case of bullets, shift + arrow left / right sets a TODO item and shift + arrow down / up sets the priority of the bullet.
+
+#+begin_src emacs-lisp
+  (setq org-support-shift-select t)
+#+end_src
+
+Custom TODO keywords with tracking:
+
+- ~@~~ Log note and timestamp after adding a note
+- ~!~ Track after entering a new state
+- ~(t)~ sets the shortkey to select state after key binding =C=-=c= =C=-=t=.
+  
+#+begin_src emacs-lisp
+  (setq org-todo-keywords
+        '(
+  	(sequence "TODO(t)" "WIP(p)" "|" "DONE(d!)" "CANCELED(c!)" ))
+        )  
+#+end_src
+
+Custom faces for TODO keywords.
+
+#+begin_src emacs-lisp
+    (setq org-todo-keyword-faces
+        '(
+          ("TODO" . org-warning)
+  	("WIP" . "yellow")
+          ("DONE" . (:foreground "green" :weight bold))
+          ("CANCELED" . (:foreground "blue" :weight bold))
+          )
+        )
+#+end_src
+
+Sources:
+
+- [[https://emacsdocs.org/docs/org/Faces-for-TODO-keywords][Faces for TODO keywords]]
+- [[https://emacsdocs.org/docs/org/Workflow-states][Emacs Docs - TODO keywords as workflow states]]
+  
+*** Keybindings
+
+Replace Org-Mode key bindings ~C-c C-n~ and ~C-c C-p~ to switch through headings. 
+
+#+begin_src emacs-lisp
+  (add-hook 'org-mode-hook
+      (lambda ()
+        (keymap-set org-mode-map "C-<down>" 'org-next-visible-heading)
+  	 (keymap-set org-mode-map "C-<up>" 'org-previous-visible-heading)
+  	)
+      )
+#+end_src
+
+Source: [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Init-Rebinding.html][Emacs Manual - Rebinding Keys in Your Init File]]
+
+*** Programming
+
+The Org Babel language facility must be set to load shell functionality.
+
+#+begin_src emacs-lisp
+  (org-babel-do-load-languages
+  'org-babel-load-languages
+  '((shell . t)))
+#+end_src
+
+Source: [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-shell.html][orgmode.org - Shell Code Blocks in Babel]]
+
+The following package tangles an org file on save. This is done by adding the option ~#+auto_tangle: t~ in the org file.
+
+#+begin_src emacs-lisp
+  (use-package org-auto-tangle
+    :defer t
+    :hook (org-mode-src . org-auto-tangle-mode)
+    :config)
+#+end_src
+
+If code shall be tangled as default, add ~(setq org-auto-tangle-default t)~ in Emacs config file.
+
+Source: [[https://github.com/yilkalargaw/org-auto-tangle][github.com - org-auto-tangle]]
+
+* Keybindings
+
+The General package provides a unified interface for key definitions.
+With the following code,  /leader-keys/ is a collection of custom key bindings. They are used by entering the prefix and the binding.    
+
+#+begin_src emacs-lisp
+  (use-package general
+    :ensure t
+    :config
+    (general-create-definer ms/leader-keys
+                            :prefix "C-+")
+    (ms/leader-keys
+     "bn" '(next-buffer :wk "Next buffer")
+     "bp" '(previous-buffer :wk "Previous buffer")))
+#+end_src
+
+Source: [[https://github.com/noctuid/general.el?tab=readme-ov-file#basic-examples][Github - noctuid/general.el]]
+
+* Session Management
+
+#+begin_src emacs-lisp
+  (desktop-save-mode 1)
+#+end_src
+
+The file in which Emacs saves the desktop is locked while the session runs, to avoid inadvertently overwriting it from another Emacs session. That lock is normally removed when Emacs exits, but if Emacs or your system crashes, the lock stays, and when you restart Emacs, it will by default ask you whether to use the locked desktop file.
+You can avoid the question by customizing the variable desktop-load-locked-desktop to either nil, which means never load the desktop in this case, or t, which means load the desktop without asking.
+
+#+begin_src emacs-lisp
+  (setq desktop-load-locked-desktop t) 
+#+end_src
+
+Source: [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Saving-Emacs-Sessions.html][Emacs Manual - Saving Emacs Sessions]]
+
+Do not save specific modes and buffers. 
+
+#+begin_src emacs-lisp
+   (setq desktop-buffers-not-to-save
+       (concat "\\("
+               "^nn\\.a[0-9]+\\|\\.log\\|(ftp)\\|^tags\\|^TAGS"
+               "\\|\\.emacs.*\\|\\.diary\\|\\.newsrc-dribble\\|\\.bbdb"
+  	        "\\)$"))
+  (add-to-list 'desktop-modes-not-to-save 'dired-mode)
+  (add-to-list 'desktop-modes-not-to-save 'Info-mode)
+  (add-to-list 'desktop-modes-not-to-save 'info-lookup-mode)
+  (add-to-list 'desktop-modes-not-to-save 'fundamental-mode)
+#+end_src
+
+Source: [[https://www.emacswiki.org/emacs?action=browse;oldid=DeskTop;id=Desktop][Emacs Wiki - Desktop]]
+
+* Buffer Management
+
+Popper is a minor-mode to open specific buffers as so called popups.
+Unlike the default behaviour of buffers, these popups do not rearrange the current buffers,
+but are displayed in-front of them.
+
+Example: Help buffers are displayed as a new window. This will rearrange the current windows.
+
+#+begin_src emacs-lisp
+  (use-package popper
+  :ensure t
+  :bind (("C-ü"   . popper-toggle)
+         ("M-ü"   . popper-cycle)
+         ("C-M-ü" . popper-toggle-type))
+  :init
+  (setq popper-reference-buffers
+        '("\\*Messages\\*"
+          "Output\\*$"
+          "\\*Async Shell Command\\*"
+          help-mode
+          compilation-mode))
+  (popper-mode +1)
+  (popper-echo-mode +1))
+#+end_src
+
+| Command                    | Effect                                                  |
+| ~popper-toggle~            | Show/hide the latest popup. Does more with prefix args. |
+| ~popper-cycle~             | Cycle through your popups in sequence.                  |
+| ~popper-toggle-type~       | Turn buffer into popup and vice-versa                   |
+| ~popper-reference-buffers~ | List of buffers to treat as popups                      |
+
+Source: [[https://github.com/emacs-straight/popper/tree/master][Github - emacs-straight/popper]]
+* Encoding
+
+Set UTF-8 as default.
+
+#+begin_src emacs-lisp
+  (set-language-environment 'utf-8)
+  (set-default-coding-systems 'utf-8)
+  (set-keyboard-coding-system 'utf-8-unix)
+  (set-terminal-coding-system 'utf-8-unix)
+#+end_src
+
+Source: [[http://xahlee.info/emacs/emacs/emacs_file_encoding.html][Xah Lee - Encoding]]
+
+* File Management
+** Backups
+
+By default, Emacs creates backups like /file.org~/ and auto-saves like /#file#/ in the working directory.
+With the following code, Emacs backups will be created in a specfic directory.
+
+Further information on [[https://www.emacswiki.org/emacs/BackupDirectory][emacswiki - Backup Directory]].
+
+#+begin_src emacs-lisp
+    (setq backup-directory-alist '((".*" . "~/Dokumente/Emacs/backup")))
+#+end_src
+
+** Archive File
+
+Archive in file under headlines *From FILENAME* where file name is the current file name.
+
+#+begin_src emacs-lisp
+  (setq org-archive-location "~/Dokumente/Emacs/archive.org::* From %s" )
+#+end_src
+
+Source: [[https://doc.endlessparentheses.com/Var/org-archive-location.html][org-archive-location]]
+
+* Development
+** Python
+
+[[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-python.html][Python Source Code Blocks in Org Mode]]
+
+#+begin_src emacs-lisp
+  (org-babel-do-load-languages
+  'org-babel-load-languages
+  '((python . t)))
+#+end_src
+
+** Magit
+
+#+begin_src emacs-lisp
+  (use-package magit
+  :ensure t)
+#+end_src
+
+Source: [[https://systemcrafters.net/mastering-git-with-magit/introduction/#installing-magit][Installing Magit]]
+
+Install latest version of transient packages to prevent issue because its version is to low (see [[https://github.com/progfolio/elpaca/issues/283][[Support]: magit transient installed version (20240110) lower than min required 20240201]]).
+
+#+begin_src emacs-lisp
+  (use-package transient :ensure t)
+#+end_src
+
+** Syntax Highlighting
+
+Enable Font Lock Mode in all buffers.
+
+#+begin_src emacs-lisp
+  (global-font-lock-mode 1)
+#+end_src
+
+See [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Font-Lock.html][Emacs Manual - Font Lock mode]]
+
+* Markup Language Modes
+
+** PlantUML
+
+As preparation, PlantUML JAR has been downloaded from [[https://plantuml.com/download][PlantUML official download page]] into .emacs.d/diagrams.
+
+#+begin_src emacs-lisp
+  (use-package plantuml-mode
+    :ensure t)
+#+end_src
+
+#+begin_src emacs-lisp
+  (setq org-plantuml-jar-path (expand-file-name "~/.emacs.d/diagrams/plantuml-1.2026.2.jar"))
+  (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
+  (org-babel-do-load-languages 'org-babel-load-languages '((plantuml . t)))
+#+end_src
+
+** Adoc Mode
+
+#+begin_src emacs-lisp tangle: no
+  (use-package adoc-mode
+    :ensure t
+    :defer t
+   )
+#+end_src
+
+[[https://github.com/bbatsov/adoc-mode][bbatsov/adoc-mode]]
+
+** YAML Mode
+
+#+begin_src emacs-lisp
+      (use-package yaml-mode
+      :ensure t
+      :defer t)
+#+end_src
+
+** Markdown Mode
+
+#+begin_src emacs-lisp
+  (use-package markdown-mode
+    :ensure t
+    :defer t
+    :mode ("README\\.md\\'" . gfm-mode)
+    :init (setq markdown-command "multimarkdown"))
+#+end_src
+
+*** Keybindings
+
+#+begin_src emacs-lisp :tangle no
+  (add-hook 'markdown-mode-hook
+  	   (lambda()
+      (keymap-set markdown-mode-map "C-c C-o" 'toc-org-markdown-follow-thing-at-point)
+      )
+    )
+#+end_src
+
+* Manpages
+** TLDR
+
+TLDR client for Emacs.
+
+#+begin_src emacs-lisp
+    (use-package tldr
+    :ensure t)
+#+end_src
+
+Source: [[https://github.com/kuanyui/tldr.el][github.com/kuanyui/tldr.el]]
+
+* Customizing
+** Themes
+
+#+begin_src emacs-lisp :tangle no
+  (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
+  (load-theme 'dracula t)
+#+end_src
+
+Source: [[https://github.com/dracula/emacs][Github - dracula/emacs]]
+
+The following code installs the ~gurvbox~ themes.
+To set a specific flavour as ~gruvbox-dark-medium~, enter =M=-=x= =load-theme= and then =gruvbox-dark-medium=.
+
+#+begin_src emacs-lisp
+  (use-package gruvbox-theme
+    :ensure t)
+#+end_src
+
+Source: [[https://github.com/greduan/emacs-theme-gruvbox][Github - greduan/emacs-theme-gruvbox]]
+
+** Custom Config
+
+As default, changes in Emacs > Options are stored as ~custom-set-variables~ in init.el.
+With this code, they are strored in a seperated file to keep init.el clean.
+
+#+begin_src emacs-lisp
+  (setq custom-file (concat user-emacs-directory "custom.el"))
+  (load custom-file)
+#+end_src
+
+Source: =C=-=h= =v= =custom-file= =RET=
+
+* Export
+** Htmllize
+
+Installed because initial version is too old, which leads to warning during HTML export.
+
+#+begin_src emacs-lisp
+  (use-package htmlize
+      :ensure t
+      )
+#+end_src
+
+Source: [[https://github.com/emacsorphanage/htmlize][emacsorphanage/htmlize]]
+
+** Org2Hugo
+
+ox-hugo is an Org exporter backend that exports Org to Hugo-compatible Markdown (Blackfriday) and also generates the front-matter (in TOML or YAML format).
+
+#+begin_src emacs-lisp
+      (use-package ox-hugo
+        :ensure t
+        :after ox)
+#+end_src
+
+#+begin_note
+~pin melpa~ as mentioned in [[https://github.com/kaushalmodi/ox-hugo/blob/main/README.org#installation][Installation]] does not work.
+#+end_note
+
+Sources:
+
+- [[https://github.com/kaushalmodi/ox-hugo][kaushalmodi/ox-hugo]]
+- [[https://dbeley.ovh/en/post/2018/08/14/create-a-blog-with-hugo-emacs-and-ox-hugo/][Create a blog with Hugo, Emacs and ox-hugo]]
+  
+** Custom CSS                                                      :ARCHIVE:
+
+Load custom CSS file at startup instead adding the header ~#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="custom.css" />~
+or inline CSS in each file.
+
+#+begin_src emacs-lisp
+  (setq org-html-head
+      (concat "<style>\n"
+              (with-temp-buffer
+                (insert-file-contents "~/.emacs.d/emacs-custom.css")
+                (buffer-string))
+              "\n</style>"))
+#+end_src
+
+Examples:
+
+- [[https://juanjose.garciaripoll.com/blog/css-style-org-mode/index.html][Ripoll - CSS Stylesheet]]
+
+* Screenshots
+
+Screen captures are pasted from the clipboard into an Org file using the package ~org-download~.
+On Linux with Wayland, the package ~wl-clipboard~ must be installed (see [[https://github.com/abo-abo/org-download/blob/master/org-download.el][org-download.el - org-download-clipboard]])
+Images are stored in ~org-download-image-dir~. If it does not exists, then it will be created.
+Key binding for pasting is defined by ~org-download-clipboard~.
+
+#+begin_src emacs-lisp
+  (use-package org-download
+   :after org
+   :defer nil
+   :ensure t
+   :custom
+   (org-download-method 'directory) 
+   (org-download-image-dir "~/Dokumente/Emacs/images" )
+   (org-download-heading-lvl 1)
+   (org-download-timestamp "_%Y%m%d-%H%M%S_" )
+   (org-image-actual-width 300)
+   :bind
+   ("C-M-y" . org-download-clipboard)
+   :config
+   (require 'org-download))
+#+end_src
+
+See [[https://github.com/abo-abo/org-download][abo-abo/org-download]]
+
+* Link List
+
+- [[https://gitlab.com/dwt1/configuring-emacs][Gitlab Derek Taylor]]
+- [[https://github.com/noctuid/general.el?tab=readme-ov-file#basic-examples][Github - noctuid/general.el]]
+- [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-shell.html][orgmode.org - Shell Code Blocks in Babel]]
+- [[https://github.com/abo-abo/org-download/blob/master/org-download.el][org-download.el - org-download-clipboard]]
+- [[https://juanjose.garciaripoll.com/blog/css-style-org-mode/index.html][Ripoll - CSS Stylesheet]]
+- [[https://github.com/kaushalmodi/ox-hugo][kaushalmodi/ox-hugo]]
+- [[https://dbeley.ovh/en/post/2018/08/14/create-a-blog-with-hugo-emacs-and-ox-hugo/][Create a blog with Hugo, Emacs and ox-hugo]]
+- [[https://github.com/emacsorphanage/htmlize][emacsorphanage/htmlize]]
+- [[https://github.com/greduan/emacs-theme-gruvbox][Github - greduan/emacs-theme-gruvbox]]
+- [[https://github.com/dracula/emacs][Github - dracula/emacs]]
+- [[https://github.com/kuanyui/tldr.el][github.com/kuanyui/tldr.el]]
+
