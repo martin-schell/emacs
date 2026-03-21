@@ -308,7 +308,7 @@ Source: [[https://doc.endlessparentheses.com/Var/org-archive-location.html][org-
 
 Source: [[https://systemcrafters.net/mastering-git-with-magit/introduction/#installing-magit][Installing Magit]]
 
-Install latest version of transient packages to prevent issue because its version is to low (see [[https://github.com/progfolio/elpaca/issues/283][[Support]: magit transient installed version (20240110) lower than min required 20240201]]).
+Install latest version of transient packages to prevent issue because its version is to low (see [[https://github.com/progfolio/elpaca/issues/283][Magit transient installed version (20240110) lower than min required 20240201]]).
 
 #+begin_src emacs-lisp
   (use-package transient :ensure t)
@@ -334,7 +334,7 @@ As preparation, PlantUML JAR has been downloaded from [[https://plantuml.com/dow
   (use-package plantuml-mode
     :ensure t)
 #+end_src
-
+ 
 #+begin_src emacs-lisp
   (setq org-plantuml-jar-path (expand-file-name "~/.emacs.d/diagrams/plantuml-1.2026.2.jar"))
   (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
@@ -456,24 +456,6 @@ Sources:
 - [[https://github.com/kaushalmodi/ox-hugo][kaushalmodi/ox-hugo]]
 - [[https://dbeley.ovh/en/post/2018/08/14/create-a-blog-with-hugo-emacs-and-ox-hugo/][Create a blog with Hugo, Emacs and ox-hugo]]
   
-** Custom CSS                                                      :ARCHIVE:
-
-Load custom CSS file at startup instead adding the header ~#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="custom.css" />~
-or inline CSS in each file.
-
-#+begin_src emacs-lisp
-  (setq org-html-head
-      (concat "<style>\n"
-              (with-temp-buffer
-                (insert-file-contents "~/.emacs.d/emacs-custom.css")
-                (buffer-string))
-              "\n</style>"))
-#+end_src
-
-Examples:
-
-- [[https://juanjose.garciaripoll.com/blog/css-style-org-mode/index.html][Ripoll - CSS Stylesheet]]
-
 * Screenshots
 
 Screen captures are pasted from the clipboard into an Org file using the package ~org-download~.
