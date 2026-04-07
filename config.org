@@ -159,7 +159,7 @@ Sources:
 - [[https://emacsdocs.org/docs/org/Faces-for-TODO-keywords][Faces for TODO keywords]]
 - [[https://emacsdocs.org/docs/org/Workflow-states][Emacs Docs - TODO keywords as workflow states]]
   
-*** Keybindings
+** Keybindings
 
 Replace Org-Mode key bindings ~C-c C-n~ and ~C-c C-p~ to switch through headings. 
 
@@ -174,7 +174,7 @@ Replace Org-Mode key bindings ~C-c C-n~ and ~C-c C-p~ to switch through headings
 
 Source: [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Init-Rebinding.html][Emacs Manual - Rebinding Keys in Your Init File]]
 
-*** Programming
+** Programming
 
 The Org Babel language facility must be set to load shell functionality.
 
