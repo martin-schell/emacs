@@ -2,7 +2,19 @@
 ;;; This format is meant to be slightly human-readable;
 ;;; nevertheless, you probably don't want to edit it.
 ;;; -*- End Of Bookmark File Format Version Stamp -*-
-(("Bibliothek"
+(("MkDocs"
+ (filename . "~/Dokumente/Projekte/mkdocs-website/docs/")
+ (front-context-string . "archive\n  drwxrw")
+ (rear-context-string . "96 Aug 13  2025 ")
+ (position . 177)
+ (last-modified 27084 45006 507543 392000))
+("Emacs-Backup"
+ (filename . "~/Dokumente/Emacs/")
+ (front-context-string . "archive.org\n  dr")
+ (rear-context-string . "63 Mar 21 15:06 ")
+ (position . 157)
+ (last-modified 27070 50433 796811 216000))
+("Bibliothek"
  (filename . "~/Dokumente/Bibliothek/")
  (front-context-string . "Johnson_Efficien")
  (rear-context-string . "33 Mar 15 13:33 ")
