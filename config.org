@@ -431,25 +431,25 @@ Installed because initial version is too old, which leads to warning during HTML
 
 #+begin_src emacs-lisp
   (use-package htmlize
-      :ensure t
-      )
+    :ensure t
+    )
 #+end_src
 
 Source: [[https://github.com/emacsorphanage/htmlize][emacsorphanage/htmlize]]
 
 ** Org2Hugo
 
-ox-hugo is an Org exporter backend that exports Org to Hugo-compatible Markdown (Blackfriday) and also generates the front-matter (in TOML or YAML format).
+/ox-hugo/ is an Org exporter backend that exports Org to Hugo-compatible Markdown (Blackfriday) and also generates the front-matter (in TOML or YAML format).
 
-#+begin_src emacs-lisp
-      (use-package ox-hugo
-        :ensure t
-        :after ox)
+Due to custom changes, the package will be loaded from a local Git repository of [[https://github.com/martin-schell/ox-hugo][my ox-hugo fork]] instead of using the /Emacs/ package manager.
+
+#+begin_src emacs-lisp :results silent
+  (use-package ox-hugo
+    :ensure nil
+    :load-path "packages/custom/ox-hugo"
+    :after ox
+    )
 #+end_src
-
-#+begin_note
-~pin melpa~ as mentioned in [[https://github.com/kaushalmodi/ox-hugo/blob/main/README.org#installation][Installation]] does not work.
-#+end_note
 
 Sources:
 
