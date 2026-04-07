@@ -481,6 +481,19 @@ Key binding for pasting is defined by ~org-download-clipboard~.
 #+end_src
 
 See [[https://github.com/abo-abo/org-download][abo-abo/org-download]]
+* Templates
+
+** yasnippet
+
+#+begin_src emacs-lisp :results silent
+  (use-package yasnippet
+    :ensure t
+    )
+#+end_src
+
+#+begin_src emacs-lisp :results silent
+  (yas-global-mode 1)
+#+end_src
 
 * Link List
 
