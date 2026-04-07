@@ -92,8 +92,35 @@ At startup, content below headers will vertically alligned with the header.
   (setq org-startup-with-inline-images t)
 #+end_src
 
-*** Task Management
+** Codeblock Templates
 
+Elisp codeblock.
+
+#+begin_src emacs-lisp :results silent
+  (add-to-list 'org-structure-template-alist '("se" . "src emacs-lisp"))
+#+end_src
+
+Hugo Callout.
+
+#+begin_src emacs-lisp :results silent
+  (add-to-list 'org-structure-template-alist '("hc" . "callout"))
+#+end_src
+
+TOML
+
+#+begin_src emacs-lisp :results silent
+  (add-to-list 'org-structure-template-alist '("st" . "src toml"))
+#+end_src
+
+Bash
+
+#+begin_src emacs-lisp :results silent
+  (add-to-list 'org-structure-template-alist '("sb" . "src bash"))
+#+end_src
+
+** Task Management
+
+- State "CANCELED"   from              [2026-03-21 Sa 18:03]
 Enables Shift selection for the content and the selection of priority and TODO-items for bullets.
 In case of bullets, shift + arrow left / right sets a TODO item and shift + arrow down / up sets the priority of the bullet.
 
