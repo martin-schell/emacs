@@ -294,6 +294,26 @@ Set UTF-8 as default.
 Source: [[http://xahlee.info/emacs/emacs/emacs_file_encoding.html][Xah Lee - Encoding]]
 
 * File Management
+** Auto-Save
+
+*super-save* auto-saves buffers when certain events happen as switch between buffers or an Emacs frame loses focus.
+
+#+begin_src emacs-lisp :results silent
+  (use-package super-save
+    :ensure t
+    :config
+    (super-save-mode +1)
+    )
+#+end_src
+
+Source: [[https://github.com/bbatsov/super-save][Github - super-save]]
+
+Stop creating #auto-save# files.
+
+#+begin_src emacs-lisp :results silent
+(setq auto-save-default nil)
+#+end_src
+
 ** Backups
 
 By default, Emacs creates backups like /file.org~/ and auto-saves like /#file#/ in the working directory.
