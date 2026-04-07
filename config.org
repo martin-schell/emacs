@@ -388,17 +388,6 @@ As preparation, PlantUML JAR has been downloaded from [[https://plantuml.com/dow
   (org-babel-do-load-languages 'org-babel-load-languages '((plantuml . t)))
 #+end_src
 
-** Adoc Mode
-
-#+begin_src emacs-lisp tangle: no
-  (use-package adoc-mode
-    :ensure t
-    :defer t
-   )
-#+end_src
-
-[[https://github.com/bbatsov/adoc-mode][bbatsov/adoc-mode]]
-
 ** YAML Mode
 
 #+begin_src emacs-lisp
