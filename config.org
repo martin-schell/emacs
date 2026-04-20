@@ -447,15 +447,49 @@ See [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Font-Lock.html][
 
 ** PlantUML
 
-As preparation, PlantUML JAR has been downloaded from [[https://plantuml.com/download][PlantUML official download page]] into .emacs.d/diagrams.
+Requirements:
+
+- PantUML JAR
+- OpenJDK / JAVA
+
+PlantUML JAR with embedded GraphViz has been downloaded from [[https://plantuml.com/download][PlantUML
+official download page]] into .emacs.d/diagrams.
 
 #+begin_src emacs-lisp
   (use-package plantuml-mode
-    :ensure t)
+    :ensure t
+    :config
+    (setq
+     org-plantuml-jar-path (expand-file-name "~/.emacs.d/diagrams/plantuml-1.2026.2.jar")
+     plantuml-java-args (add-to-list 'plantuml-java-args "-f=png")
+     plantuml-default-exec-mode "jar"
+     )
+    )
 #+end_src
- 
+
+*Customizing*:
+
+| Variable                     | Change                           |
+| ~plantuml-java-args~         | Set PNG as output formate        |
+| ~org-plantuml-jar-path~      | Set path of local JAR file       |
+| ~plantuml-default-exec-mode~ | Use local JAR file for rendering |
+
+In this configuration, OpenJDK 25 has been downloaded from [[https://adoptium.net/de/temurin/releases][Temurin
+Latest Releases]] into .emacs.d/diagrams/jdk-25.
+
+The command to evalute PlantUML is set by ~plantuml-java-command~.
+As default, PlantUML code is evaluated by ~java~ command. This command must exists in ~PATH~ during /Emacs/ runtime.
+
+Set ~JAVA_HOME~ and add ~JAVA_HOME/bin~ into ~PATH~.
+
 #+begin_src emacs-lisp
-  (setq org-plantuml-jar-path (expand-file-name "~/.emacs.d/diagrams/plantuml-1.2026.2.jar"))
+  (setenv "JAVA_HOME" (concat user-emacs-directory "diagrams/jdk-25"))
+  (setenv "PATH" (concat (getenv "JAVA_HOME") "/bin:" (getenv "PATH")))
+#+end_src
+
+Add PlantUML to Babel mapping list and load support for PlantUML.
+
+#+begin_src emacs-lisp
   (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
   (org-babel-do-load-languages 'org-babel-load-languages '((plantuml . t)))
 #+end_src
