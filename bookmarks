@@ -2,7 +2,13 @@
 ;;; This format is meant to be slightly human-readable;
 ;;; nevertheless, you probably don't want to edit it.
 ;;; -*- End Of Bookmark File Format Version Stamp -*-
-(("MkDocs"
+(("org-refile-last-stored"
+ (filename . "~/Dokumente/Projekte/Hugo/blog/content-org/hugo_org.org")
+ (front-context-string . "**** Adding Diag")
+ (rear-context-string . "D;\n#+end_src  \n\n")
+ (position . 14484)
+ (last-modified 27108 52906 604888 511000))
+("MkDocs"
  (filename . "~/Dokumente/Projekte/mkdocs-website/docs/")
  (front-context-string . "archive\n  drwxrw")
  (rear-context-string . "96 Aug 13  2025 ")
