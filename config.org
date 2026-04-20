@@ -236,6 +236,15 @@ If code shall be tangled as default, add ~(setq org-auto-tangle-default t)~ in E
 
 Source: [[https://github.com/yilkalargaw/org-auto-tangle][github.com - org-auto-tangle]]
 
+** Refile
+
+Refile targets include Agenda files and the current files itself, up to ~maxlevel~.
+
+#+begin_src emacs-lisp :results silent
+  (setq org-refile-targets (quote ((nil :maxlevel . 3)
+                                   (org-agenda-files :maxlevel . 3))))
+#+end_src
+
 * Keybindings
 
 The General package provides a unified interface for key definitions.
