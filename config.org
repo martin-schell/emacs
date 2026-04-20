@@ -296,6 +296,32 @@ Source: [[https://www.emacswiki.org/emacs?action=browse;oldid=DeskTop;id=Desktop
 
 * Buffer Management
 
+** Auto-Reload
+
+Reload buffers after changes on filesystem.
+
+#+begin_src emacs-lisp
+  (global-auto-revert-mode)
+#+end_src
+
+#+begin_src emacs-lisp
+  (setq
+   global-auto-revert-non-file-buffers t
+   auto-revert-verbose nil
+   )
+#+end_src
+
+| Effect                                        | Command                               |
+| Enable global auto-revert                     | ~global-auto-revert-mode~             |
+| Revert Dired and other buffers                | ~global-auto-revert-non-file-buffers~ |
+| Suppress the revert messages in the echo area | ~setq auto-revert-verbose~            |
+
+Sources:
+
+- [[https://github.com/daviwil/dotfiles/blob/master/Emacs.org][daviwil/dotfiles - Emacs.org]]
+
+** Popper
+
 Popper is a minor-mode to open specific buffers as so called popups.
 Unlike the default behaviour of buffers, these popups do not rearrange the current buffers,
 but are displayed in-front of them.
