@@ -636,6 +636,38 @@ See [[https://github.com/abo-abo/org-download][abo-abo/org-download]]
 #+begin_src emacs-lisp :results silent
   (yas-global-mode 1)
 #+end_src
+* Performance
+
+Because right-to-left direction is not relevant for me, Bidirectional Text Scanning is disabled. Probably this setting has no measureable effect in small buffers, but in large ones.
+
+#+begin_src emacs-lisp :results silent
+  (setq-default bidi-display-reordering 'left-to-right
+                bidi-paragraph-direction 'left-to-right)
+  (setq bidi-inhibit-bpa t)
+#+end_src
+
+Skip Fontification During Input and defer it until typing stops.
+
+#+begin_src emacs-lisp :results silent
+(setq redisplay-skip-fontification-on-input t)
+#+end_src
+
+Increase Process Output Buffer for LSP.
+
+#+begin_src emacs-lisp :results silent
+(setq read-process-output-max (* 4 1024 1024))
+#+end_src
+
+Don’t Render Cursors in Non-Focused Windows.
+
+#+begin_src emacs-lisp :results silent
+(setq-default cursor-in-non-selected-windows nil)
+(setq highlight-nonselected-windows nil)
+#+end_src
+
+Sources:
+
+- [[https://emacsredux.com/blog/2026/04/07/stealing-from-the-best-emacs-configs/][Stealing from the Best Emacs Configs]]
 
 * Link List
 
